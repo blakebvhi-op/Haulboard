@@ -628,8 +628,11 @@ function applySchedule(p,date,driverId,opts={}){
   p.scheduled_date=date;p.driver_id=driverId;
   if(date){
     p.status='scheduled';
-    if(!p.run_id){
-      let run=runsFor(date,driverId)[0];
+    // A date without a driver is a request, not a dispatch: it stays in
+    // "Needs a truck" (tagged "asked for <date>") until someone is picked.
+    // Only addStop() passes an explicit run, which may be unassigned.
+    if(!p.run_id&&(driverId||opts.runId)){
+      let run=(opts.runId&&runById(opts.runId))||runsFor(date,driverId)[0];
       if(!run){run={id:'run_'+uid(),company_id:currentCompanyId,run_date:date,driver_id:driverId,status:'queued',stop_ids:[],created_at:nowIso()};runs.push(run);}
       if(!run.stop_ids.includes(p.id))run.stop_ids.push(p.id);
       queueSave('runs',run);p.run_id=run.id;
@@ -716,11 +719,11 @@ function openAssignPicker(pickupId){
   const date=p.scheduled_date||boardDate;
   openModal('Assign '+esc(vehLabel(p)),`
     <div class="fg"><div class="flbl">Date</div><input class="finput" type="date" id="asDate" value="${date}"></div>
-    <div class="fg"><div class="flbl">Driver</div><select class="finput" id="asDriver"><option value="">— unassigned run —</option>${drivers().map(m=>`<option value="${m.user_id}" ${p.driver_id===m.user_id?'selected':''}>${esc(m.display_name)}</option>`).join('')}</select></div>
+    <div class="fg"><div class="flbl">Driver</div><select class="finput" id="asDriver"><option value="">— pick a driver —</option>${drivers().map(m=>`<option value="${m.user_id}" ${p.driver_id===m.user_id?'selected':''}>${esc(m.display_name)}</option>`).join('')}</select></div>
     <div class="sub">Goes onto that driver's run for the day (creates one if needed).</div>`,
     `<button class="btn btn-amber" onclick="assignPickup('${p.id}')">Assign</button>`);
 }
-function assignPickup(id){const p=pickupById(id);if(!p)return;const d=val('asDate');if(!d){alert('Pick a date.');return;}applySchedule(p,d,val('asDriver')||null);closeModal();render();}
+function assignPickup(id){const p=pickupById(id);if(!p)return;const d=val('asDate');if(!d){alert('Pick a date.');return;}const drv=val('asDriver');if(!drv){alert('Pick a driver — that\'s what takes it off the needs-a-truck list.');return;}applySchedule(p,d,drv);closeModal();render();}
 
 // ── run page (shared by Dispatch and My Run) ─────────────────────────
 function openRun(id){openRunId=id;render();}
@@ -815,7 +818,7 @@ function openAddStop(runId){
       <div class="veh">${esc(vehLabel(p))} <span class="money" style="font-size:15px">${money(p.offer_price)}</span></div><div class="addr">${esc(p.address||'')}</div>
       ${p.run_id?`<div class="sub" style="color:var(--amber)">Currently on ${fmtDate(p.scheduled_date)} · ${esc(memberName(p.driver_id))}</div>`:''}</div>`).join(''):'<div class="empty">No cars waiting.</div>'}</div>`);
 }
-function addStop(runId,id){const run=runById(runId),p=pickupById(id);if(!run||!p)return;applySchedule(p,run.run_date,run.driver_id);closeModal();render();}
+function addStop(runId,id){const run=runById(runId),p=pickupById(id);if(!run||!p)return;applySchedule(p,run.run_date,run.driver_id,{runId});closeModal();render();}
 function openRunEditor(id){
   const r=runById(id);if(!r)return;
   openModal('Edit run',`
