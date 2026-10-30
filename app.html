@@ -677,7 +677,9 @@ function renderDispatch(){
   if(openRunId){renderRunPage(body,openRunId);return;}
   const date=boardDate;
   const cols=[...drivers().map(m=>({id:m.user_id,name:m.display_name,color:m.color||'#64748b'})),{id:null,name:'Unassigned',color:'#64748b'}];
-  const waiting=pickups.filter(p=>p.status==='new'||(p.status==='scheduled'&&!p.run_id));
+  const waiting=pickups.filter(p=>p.status==='new'||(p.status==='scheduled'&&!p.run_id))
+    .sort((a,b)=>{const ad=a.scheduled_date===date?0:a.scheduled_date?1:2,bd=b.scheduled_date===date?0:b.scheduled_date?1:2;return ad-bd||(a.scheduled_date||'9').localeCompare(b.scheduled_date||'9')||(a.created_at||'').localeCompare(b.created_at||'');});
+  const forDay=waiting.filter(p=>p.scheduled_date===date).length;
   const dayTotal=runs.filter(r=>r.run_date===date).reduce((a,r)=>{const pr=runProgress(r);a.t+=pr.total;a.d+=pr.done;return a;},{t:0,d:0});
   body.innerHTML=`
     <div class="row" style="margin-bottom:10px">
@@ -700,8 +702,8 @@ function renderDispatch(){
           <div class="sub" style="margin-top:4px;line-height:1.5">${stops.slice(0,4).map((p,i)=>`${i+1}. ${esc(vehLabel(p))}${p.status==='done'?' ✓':''}`).join('<br>')}${stops.length>4?`<br>+${stops.length-4} more`:''}${!stops.length?'(empty)':''}</div>
           <div class="prog"><i style="width:${pr.total?pr.done/pr.total*100:0}%"></i></div></div>`;}).join(''):`<div class="sub" style="padding:8px 0">No runs.</div>`}
       </div>`;}).join('')}</div>
-    <div class="sec">Needs a truck <span style="opacity:.7">${waiting.length}</span></div>
-    ${waiting.length?waiting.map(p=>`<div class="card"><div class="row" style="align-items:flex-start">
+    <div class="sec">Needs a truck <span style="opacity:.7">${waiting.length}</span>${forDay?` <span style="color:var(--amber)">· ${forDay} asked for ${fmtDate(date)}</span>`:''}</div>
+    ${waiting.length?waiting.map(p=>`<div class="card" style="${p.scheduled_date===date?'border-color:var(--amber)':''}"><div class="row" style="align-items:flex-start">
         <div class="grow" onclick="openPickupEditor('${p.id}')" style="cursor:pointer">
           <div class="veh">${esc(vehLabel(p))} <span class="money" style="font-size:15px">${money(p.offer_price)}</span></div>
           <div class="addr">${esc(p.address||'(no address)')}</div>
