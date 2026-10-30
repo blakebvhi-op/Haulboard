@@ -514,12 +514,12 @@ function pickupCard(p,opts={}){
         <div class="addr">${esc(p.seller_name||'')}${p.seller_phone?` · ${esc(p.seller_phone)}`:''}</div>
         <div class="addr">${esc(p.address||'(no address)')}</div>
         ${flags.length?`<div style="margin-top:4px">${flags.map(f=>`<span class="chip" style="background:#3f1d1d;color:#fca5a5;margin-right:4px">${f}</span>`).join('')}</div>`:''}
-        ${p.status==='scheduled'?`<div class="sub" style="margin-top:4px;color:var(--amber)">${fmtDate(p.scheduled_date)}${p.time_window?' · '+esc(p.time_window):''}${d?' · '+esc(d):' · no driver yet'}</div>`:''}
+        ${p.status==='scheduled'?`<div class="sub" style="margin-top:4px;color:var(--amber)">${p.run_id?'':'Asked for '}${fmtDate(p.scheduled_date)}${p.time_window?' · '+esc(p.time_window):''}${d?' · '+esc(d):' · no driver yet'}</div>`:''}
         ${p.status==='done'?`<div class="sub" style="margin-top:4px;color:var(--green)">Picked up ${fmtTsFull(p.loaded_at||p.paid_at)} · paid ${money(p.paid_amount)}${p.yard_price?' · sold '+money(p.yard_price):''}</div>`:''}
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div class="money">${money(p.offer_price)}</div>
-        <span class="chip st-${p.status}">${STATUS_LABEL[p.status]||p.status}</span>
+        <span class="chip st-${p.status==='scheduled'&&!p.run_id?'new':p.status}">${p.status==='scheduled'&&!p.run_id?STATUS_LABEL.new:(STATUS_LABEL[p.status]||p.status)}</span>
       </div>
     </div>
   </div>`;
@@ -527,10 +527,12 @@ function pickupCard(p,opts={}){
 function renderPickups(){
   const body=$('pickupsBody');
   const q=pickupSearch.toLowerCase();
-  const counts={new:0,scheduled:0,done:0,cancelled:0};pickups.forEach(p=>counts[p.status]=(counts[p.status]||0)+1);
-  let list=pickups.filter(p=>pickupFilter==='all'||p.status===pickupFilter);
+  // "Needs truck" = no driver/run yet (dated or not); "Scheduled" = on a driver's run
+  const bucket=p=>p.status==='scheduled'?(p.run_id?'scheduled':'new'):p.status;
+  const counts={new:0,scheduled:0,done:0,cancelled:0};pickups.forEach(p=>counts[bucket(p)]=(counts[bucket(p)]||0)+1);
+  let list=pickups.filter(p=>pickupFilter==='all'||bucket(p)===pickupFilter);
   if(q)list=list.filter(p=>[vehLabel(p),p.seller_name,p.seller_phone,p.address,p.vin,p.plate,p.notes].join(' ').toLowerCase().includes(q));
-  if(pickupFilter==='new')list.sort((a,b)=>(a.created_at||'').localeCompare(b.created_at||''));
+  if(pickupFilter==='new')list.sort((a,b)=>(a.scheduled_date||'9').localeCompare(b.scheduled_date||'9')||(a.created_at||'').localeCompare(b.created_at||''));
   else if(pickupFilter==='scheduled')list.sort((a,b)=>(a.scheduled_date||'9').localeCompare(b.scheduled_date||'9'));
   const pills=[['new','Needs truck'],['scheduled','Scheduled'],['done','Picked up'],['cancelled','Cancelled'],['all','All']];
   body.innerHTML=`
