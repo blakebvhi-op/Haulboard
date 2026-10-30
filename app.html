@@ -222,7 +222,7 @@ textarea.finput{min-height:70px;resize:vertical}
 // Leave SB_URL empty to run in demo mode (localStorage only).
 // ═══════════════════════════════════════════════════════════════════
 const SB_URL='https://rgtmdugprgkuzohjigrn.supabase.co';
-const SB_KEY='';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJndG1kdWdwcmdrdXpvaGppZ3JuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNzc2NTcsImV4cCI6MjEwODk1MzY1N30.pRbFYCliKqVLy2CTkQW3rIJjLoAWJgGV31MPtnE-thQ';
 const DEMO=!SB_URL;
 const APP_NAME='HaulBoard';
 
@@ -298,12 +298,13 @@ function setSuMode(m){suMode=m;$('suModeOwner').classList.toggle('on',m==='owner
 function authErr(id,msg,ok){const e=$(id);e.className='auth-err show'+(ok?' ok':'');e.textContent=msg;}
 
 async function doSignIn(){
+  if(!SB_KEY){authErr('siError','SB_KEY is empty in app.html — paste the anon key from Supabase → Project Settings → API.');return;}
   const email=$('siEmail').value.trim(),password=$('siPassword').value;
   if(!email||!password){authErr('siError','Email and password are required.');return;}
   const b=$('siBtn');b.disabled=true;b.textContent='SIGNING IN…';
   try{
     const r=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-    const d=await r.json();if(!r.ok)throw new Error(d.error_description||d.msg||'Sign in failed');
+    const d=await r.json();if(!r.ok)throw new Error(d.error_description||d.msg||d.message||d.error||'Sign in failed');
     saveAuthSession(d);scheduleTokenRefresh();
     const pend=lsGet('hb_pending_signup',null);
     if(pend){if(pend.mode==='owner')await rpc('signup_create_company',{p_company_name:pend.company,p_display_name:pend.name});else await rpc('join_company',{p_code:pend.code,p_display_name:pend.name});try{localStorage.removeItem('hb_pending_signup');}catch{}}
@@ -312,6 +313,7 @@ async function doSignIn(){
   finally{b.disabled=false;b.textContent='SIGN IN';}
 }
 async function doSignUp(){
+  if(!SB_KEY){authErr('suError','SB_KEY is empty in app.html — paste the anon key from Supabase → Project Settings → API.');return;}
   const name=$('suName').value.trim(),email=$('suEmail').value.trim(),password=$('suPassword').value;
   const company=$('suCompany').value.trim(),code=$('suCode').value.trim().toUpperCase();
   if(!name||!email||!password){authErr('suError','Name, email and password are required.');return;}
@@ -321,7 +323,7 @@ async function doSignUp(){
   const b=$('suBtn');b.disabled=true;b.textContent='CREATING…';
   try{
     const r=await fetch(SB_URL+'/auth/v1/signup',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password,data:{full_name:name}})});
-    const d=await r.json();if(!r.ok)throw new Error(d.error_description||d.msg||'Sign up failed');
+    const d=await r.json();if(!r.ok)throw new Error(d.error_description||d.msg||d.message||d.error||'Sign up failed');
     if(d.access_token){
       saveAuthSession(d);scheduleTokenRefresh();
       const res=suMode==='owner'?await rpc('signup_create_company',{p_company_name:company,p_display_name:name}):await rpc('join_company',{p_code:code,p_display_name:name});
