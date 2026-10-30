@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>HaulBoard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f14;--surface:#141a22;--surface2:#1b232d;--line:#263040;
+  --text:#eef2f6;--muted:#8a97a8;
+  --amber:#f5a524;--amber2:#d98c0f;
+  --green:#22c55e;--blue:#3b82f6;--red:#ef4444;--purple:#a855f7;--teal:#14b8a6;
+  --hh:54px;--bnh:62px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;font-size:14px}
+button,input,select,textarea{font-family:inherit;font-size:14px;color:var(--text)}
+a{color:inherit}
+.hidden{display:none!important}
+
+/* header */
+header{position:fixed;top:0;left:0;right:0;height:calc(var(--hh) + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);z-index:50;display:flex;align-items:center;justify-content:space-between;padding-left:14px;padding-right:14px;background:var(--surface);border-bottom:1px solid var(--line)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--amber);display:flex;align-items:center;gap:8px}
+.logo span{color:var(--text)}
+.logo-icon{width:28px;height:28px;background:var(--amber);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#000;font-size:15px}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sync-dot.syncing{background:var(--amber);animation:blink 1s infinite}
+.sync-dot.synced{background:var(--green)}
+.sync-dot.error{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-lbl{font-size:10px;color:var(--muted);cursor:pointer}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--amber);color:#000;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none}
+.dtabs{display:none;gap:3px;background:var(--bg);border-radius:8px;padding:4px}
+.dtab{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;background:transparent;color:var(--muted)}
+.dtab.active{background:var(--amber);color:#000}
+
+/* main */
+main{position:fixed;top:calc(var(--hh) + env(safe-area-inset-top));bottom:calc(var(--bnh) + env(safe-area-inset-bottom));left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 12px 24px}
+.view{display:none;max-width:980px;margin:0 auto}
+.view.active{display:block}
+
+/* bottom nav */
+nav.bnav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--bnh) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:var(--surface);border-top:1px solid var(--line);display:flex;z-index:50}
+.bn{flex:1;border:none;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.bn .ic{font-size:20px}
+.bn.active{color:var(--amber)}
+@media(min-width:860px){
+  .dtabs{display:flex}
+  nav.bnav{display:none}
+  main{bottom:0}
+  :root{--bnh:0px}
+}
+
+/* common */
+.row{display:flex;align-items:center;gap:8px}
+.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--text)}
+.sub{font-size:12px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.card.tap{cursor:pointer}
+.card.tap:active{background:var(--surface2)}
+.empty{text-align:center;color:var(--muted);padding:32px 12px;font-size:13px;line-height:1.6}
+.btn{border:none;border-radius:9px;padding:10px 14px;font-weight:600;cursor:pointer;background:var(--surface2);color:var(--text);white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn:active{opacity:.8}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-amber{background:var(--amber);color:#000}
+.btn-green{background:var(--green);color:#000}
+.btn-red{background:var(--red);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--line)}
+.btn-sm{padding:7px 11px;font-size:12px}
+.btn-xs{padding:4px 7px;font-size:11px;border-radius:6px}
+.btn-block{width:100%}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.3px}
+.pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pills .pill{cursor:pointer;background:var(--surface2);color:var(--muted);border:1px solid var(--line);padding:6px 12px;flex-shrink:0}
+.pills .pill.active{background:var(--amber);color:#000;border-color:var(--amber)}
+.chip{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.st-new{background:#1e3a8a;color:#bfdbfe}.st-scheduled{background:#78350f;color:#fde68a}.st-done{background:#14532d;color:#bbf7d0}.st-cancelled{background:#3f3f46;color:#d4d4d8}
+.fg{margin-bottom:10px}
+.flbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-weight:600}
+.finput,select.finput,textarea.finput{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px;color:var(--text);outline:none}
+.finput:focus{border-color:var(--amber)}
+textarea.finput{min-height:70px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.tog{display:flex;gap:6px}
+.tog button{flex:1;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 4px;font-size:12px;color:var(--muted);cursor:pointer}
+.tog button.on{background:var(--amber);color:#000;border-color:var(--amber);font-weight:700}
+.money{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--amber)}
+.sec{margin:18px 0 8px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;font-weight:700}
+.veh{font-weight:700;font-size:15px}
+.addr{font-size:12px;color:var(--muted)}
+.addr a{text-decoration:none}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.stat .v{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;margin-top:2px}
+.board{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
+.col{flex:0 0 260px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;min-height:120px}
+.col .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.col .cn{font-weight:700}
+.runcard{background:var(--surface2);border-radius:9px;padding:10px;margin-bottom:8px;cursor:pointer;border-left:4px solid var(--line)}
+.runcard.active{border-left-color:var(--amber)}
+.runcard.done{border-left-color:var(--green);opacity:.75}
+.prog{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:6px}
+.prog i{display:block;height:100%;background:var(--green)}
+.stop{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.stop.arrived{border-left-color:var(--amber)}
+.stop.done{border-left-color:var(--green)}
+.stop .n{width:24px;height:24px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.ordr{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.cklist label{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--line);cursor:pointer}
+.cklist input{width:18px;height:18px}
+
+/* modal */
+.mback{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:600px){.mback{align-items:center}}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:16px 16px 0 0;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+@media(min-width:600px){.modal{border-radius:16px}}
+.mtitle{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.mclose{border:none;background:var(--surface2);color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px}
+.macts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.macts .btn{flex:1}
+
+/* auth / loading */
+#loading,#authScreen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.authbox{width:100%;max-width:380px}
+.authbox .logo{font-size:34px;justify-content:center;margin-bottom:24px}
+.authbox .logo-icon{width:40px;height:40px;font-size:22px}
+.auth-err{font-size:12px;color:var(--red);margin:8px 0;display:none}
+.auth-err.show{display:block}
+.auth-err.ok{color:var(--green)}
+.auth-link{text-align:center;font-size:12px;color:var(--muted);margin-top:14px}
+.auth-link a{color:var(--amber);cursor:pointer;text-decoration:none}
+.spin{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--amber);border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.demo-banner{background:#3b2b05;color:#fde68a;font-size:11px;text-align:center;padding:5px;border-bottom:1px solid #78350f}
+.user-menu{position:fixed;top:calc(var(--hh) + env(safe-area-inset-top) + 4px);right:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;z-index:60;display:none;min-width:180px}
+.user-menu.open{display:block}
+.umi{padding:10px 12px;border-radius:7px;cursor:pointer;font-size:13px}
+.umi:hover{background:var(--surface2)}
+.umi.sub{font-size:11px;color:var(--muted);cursor:default}
+</style>
+</head>
+<body>
+
+<div id="loading"><div style="text-align:center"><div class="spin"></div><div class="sub" id="loadMsg">Loading…</div></div></div>
+
+<div id="authScreen" class="hidden">
+  <div class="authbox">
+    <div class="logo"><div class="logo-icon">🚛</div>HAUL<span>BOARD</span></div>
+    <div id="authSignIn">
+      <div class="fg"><div class="flbl">Email</div><input class="finput" id="siEmail" type="email" autocomplete="email"></div>
+      <div class="fg"><div class="flbl">Password</div><input class="finput" id="siPassword" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doSignIn()"></div>
+      <div class="auth-err" id="siError"></div>
+      <button class="btn btn-amber btn-block" id="siBtn" onclick="doSignIn()">SIGN IN</button>
+      <div class="auth-link">New here? <a onclick="showAuthForm('signup')">Create an account</a></div>
+    </div>
+    <div id="authSignUp" class="hidden">
+      <div class="fg"><div class="flbl">Your name</div><input class="finput" id="suName" autocomplete="name"></div>
+      <div class="fg"><div class="flbl">Email</div><input class="finput" id="suEmail" type="email" autocomplete="email"></div>
+      <div class="fg"><div class="flbl">Password (8+ chars)</div><input class="finput" id="suPassword" type="password" autocomplete="new-password"></div>
+      <div class="fg"><div class="flbl">I am…</div>
+        <div class="tog"><button id="suModeOwner" class="on" onclick="setSuMode('owner')">Starting a company</button><button id="suModeDriver" onclick="setSuMode('driver')">Joining as a driver</button></div></div>
+      <div class="fg" id="suCompanyWrap"><div class="flbl">Company name</div><input class="finput" id="suCompany" placeholder="e.g. Shane's Junk Cars"></div>
+      <div class="fg hidden" id="suCodeWrap"><div class="flbl">Join code (ask the owner)</div><input class="finput" id="suCode" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:3px"></div>
+      <div class="auth-err" id="suError"></div>
+      <button class="btn btn-amber btn-block" id="suBtn" onclick="doSignUp()">CREATE ACCOUNT</button>
+      <div class="auth-link">Already have one? <a onclick="showAuthForm('signin')">Sign in</a></div>
+    </div>
+    <div id="authNoProfile" class="hidden">
+      <div class="card"><div class="veh" style="margin-bottom:6px">Almost there</div><div class="sub" style="line-height:1.6">Your account exists but isn't attached to a company yet. Enter the join code from your owner, or start a new company.</div></div>
+      <div class="fg"><div class="flbl">Join code</div><input class="finput" id="npCode" style="text-transform:uppercase;letter-spacing:3px"></div>
+      <button class="btn btn-amber btn-block" onclick="doJoinFromNoProfile()">JOIN COMPANY</button>
+      <div class="fg" style="margin-top:14px"><div class="flbl">…or start a company</div><input class="finput" id="npCompany" placeholder="Company name"></div>
+      <button class="btn btn-block" onclick="doCreateFromNoProfile()">CREATE COMPANY</button>
+      <div class="auth-err" id="npError"></div>
+      <div class="auth-link"><a onclick="doSignOut()">Sign out</a></div>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo"><div class="logo-icon">🚛</div>HAUL<span>BOARD</span></div>
+  <div class="dtabs" id="dtabs"></div>
+  <div class="hdr-right">
+    <span class="sync-lbl" id="syncLbl" onclick="resync()"></span>
+    <div class="sync-dot" id="syncDot"></div>
+    <button class="avatar" id="userAvatar" onclick="toggleUserMenu()">?</button>
+  </div>
+</header>
+<div class="user-menu" id="userMenu">
+  <div class="umi sub" id="umName"></div>
+  <div class="umi" onclick="closeUserMenu();switchView('settings')">⚙ Settings</div>
+  <div class="umi" onclick="closeUserMenu();resync()">↻ Resync</div>
+  <div class="umi" onclick="doSignOut()">Sign out</div>
+</div>
+
+<main>
+  <div id="demoBanner" class="demo-banner hidden">DEMO MODE — data lives in this browser only. Set SB_URL / SB_KEY in app.html to go live.</div>
+  <div class="view" id="view-mine"><div id="mineBody"></div></div>
+  <div class="view" id="view-dispatch"><div id="dispatchBody"></div></div>
+  <div class="view" id="view-pickups"><div id="pickupsBody"></div></div>
+  <div class="view" id="view-money"><div id="moneyBody"></div></div>
+  <div class="view" id="view-settings"><div id="settingsBody"></div></div>
+</main>
+<nav class="bnav" id="bnav"></nav>
+<div id="modalHost"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// CONFIG — fill these in from Supabase → Project Settings → API.
+// Leave SB_URL empty to run in demo mode (localStorage only).
+// ═══════════════════════════════════════════════════════════════════
+const SB_URL='';
+const SB_KEY='';
+const DEMO=!SB_URL;
+const APP_NAME='HaulBoard';
+
+// ── helpers ──────────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function money(v){return '$'+(parseFloat(v)||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function shiftDate(ymd,days){const d=new Date(ymd+'T12:00:00');d.setDate(d.getDate()+days);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtDate(ymd){if(!ymd)return'';const d=new Date(ymd+'T12:00:00');return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+function fmtTs(ts){if(!ts)return'';const d=new Date(ts);return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+function fmtTsFull(ts){if(!ts)return'';const d=new Date(ts);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+fmtTs(ts);}
+function nowIso(){return new Date().toISOString();}
+function lsGet(k,fb){try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb;}catch{return fb;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function telHref(p){return 'tel:'+String(p||'').replace(/[^\d+]/g,'');}
+function smsHref(p){return 'sms:'+String(p||'').replace(/[^\d+]/g,'');}
+function mapsSearch(a){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a||'');}
+function vehLabel(p){return [p.year,p.make,p.model].filter(Boolean).join(' ')||'(vehicle)';}
+function toast(msg){const t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;left:50%;bottom:calc(var(--bnh) + 20px);transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);padding:10px 16px;border-radius:9px;z-index:300;font-size:13px';document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
+// Google Maps directions link. Origin omitted = device's current location.
+// Max 9 waypoints + destination per link, so long runs are split into legs.
+function mapsLinks(stops){
+  const addrs=stops.map(p=>p.address).filter(Boolean);const links=[];
+  for(let i=0;i<addrs.length;i+=10){
+    const chunk=addrs.slice(i,i+10);const dest=chunk[chunk.length-1];const wps=chunk.slice(0,-1);
+    let url='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(dest);
+    if(wps.length)url+='&waypoints='+encodeURIComponent(wps.join('|'));
+    links.push({label:addrs.length>10?`Stops ${i+1}–${i+chunk.length}`:'Open run in Maps',url});
+  }
+  return links;
+}
+
+// ── auth state ───────────────────────────────────────────────────────
+let currentUser=null,authAccessToken=null,authRefreshToken=null,authExpiry=0;
+let currentRole=null,currentCompanyId=null,currentCompany=null,currentDisplayName=null;
+const AUTH_KEY='hb_auth';
+function isOwner(){return currentRole==='owner';}
+function isManager(){return currentRole==='owner'||currentRole==='dispatcher';}
+
+function saveAuthSession(d){
+  authAccessToken=d.access_token;authRefreshToken=d.refresh_token;authExpiry=Date.now()+(d.expires_in||3600)*1000;
+  const u=d.user||{};currentUser={id:u.id,email:u.email,name:u.user_metadata?.full_name||u.email?.split('@')[0]||'User'};
+  lsSet(AUTH_KEY,{at:authAccessToken,rt:authRefreshToken,exp:authExpiry,user:currentUser});
+}
+function clearAuthSession(){authAccessToken=null;authRefreshToken=null;authExpiry=0;currentUser=null;currentRole=null;currentCompanyId=null;currentCompany=null;try{localStorage.removeItem(AUTH_KEY);}catch{}}
+async function restoreSession(){
+  if(DEMO){demoSignIn();return true;}
+  const s=lsGet(AUTH_KEY,null);if(!s)return false;
+  authAccessToken=s.at;authRefreshToken=s.rt;authExpiry=s.exp||0;currentUser=s.user||null;
+  if(Date.now()>authExpiry-60000)return await doTokenRefresh();
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/user',{headers:{apikey:SB_KEY,Authorization:'Bearer '+authAccessToken}});
+    if(!r.ok)return await doTokenRefresh();
+    const u=await r.json();currentUser={id:u.id,email:u.email,name:u.user_metadata?.full_name||u.email?.split('@')[0]||'User'};return true;
+  }catch{return !!currentUser;} // offline: trust cached session
+}
+async function doTokenRefresh(){
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:authRefreshToken})});
+    if(!r.ok){clearAuthSession();return false;}
+    saveAuthSession(await r.json());return true;
+  }catch{return !!currentUser;}
+}
+function scheduleTokenRefresh(){if(DEMO)return;const ms=authExpiry-Date.now()-5*60*1000;if(ms>0)setTimeout(async()=>{await doTokenRefresh();scheduleTokenRefresh();},ms);}
+
+function showAuthScreen(form){$('authScreen').classList.remove('hidden');$('loading').classList.add('hidden');showAuthForm(form||'signin');}
+function hideAuthScreen(){$('authScreen').classList.add('hidden');}
+function showAuthForm(f){$('authSignIn').classList.toggle('hidden',f!=='signin');$('authSignUp').classList.toggle('hidden',f!=='signup');$('authNoProfile').classList.toggle('hidden',f!=='noprofile');}
+let suMode='owner';
+function setSuMode(m){suMode=m;$('suModeOwner').classList.toggle('on',m==='owner');$('suModeDriver').classList.toggle('on',m==='driver');$('suCompanyWrap').classList.toggle('hidden',m!=='owner');$('suCodeWrap').classList.toggle('hidden',m!=='driver');}
+function authErr(id,msg,ok){const e=$(id);e.className='auth-err show'+(ok?' ok':'');e.textContent=msg;}
+
+async function doSignIn(){
+  const email=$('siEmail').value.trim(),password=$('siPassword').value;
+  if(!email||!password){authErr('siError','Email and password are required.');return;}
+  const b=$('siBtn');b.disabled=true;b.textContent='SIGNING IN…';
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error_description||d.msg||'Sign in failed');
+    saveAuthSession(d);scheduleTokenRefresh();
+    const pend=lsGet('hb_pending_signup',null);
+    if(pend){if(pend.mode==='owner')await rpc('signup_create_company',{p_company_name:pend.company,p_display_name:pend.name});else await rpc('join_company',{p_code:pend.code,p_display_name:pend.name});try{localStorage.removeItem('hb_pending_signup');}catch{}}
+    hideAuthScreen();$('loading').classList.remove('hidden');await loadApp();
+  }catch(e){authErr('siError',e.message||'Sign in failed.');}
+  finally{b.disabled=false;b.textContent='SIGN IN';}
+}
+async function doSignUp(){
+  const name=$('suName').value.trim(),email=$('suEmail').value.trim(),password=$('suPassword').value;
+  const company=$('suCompany').value.trim(),code=$('suCode').value.trim().toUpperCase();
+  if(!name||!email||!password){authErr('suError','Name, email and password are required.');return;}
+  if(password.length<8){authErr('suError','Password must be at least 8 characters.');return;}
+  if(suMode==='owner'&&!company){authErr('suError','Enter your company name.');return;}
+  if(suMode==='driver'&&code.length<4){authErr('suError','Enter the join code from your owner.');return;}
+  const b=$('suBtn');b.disabled=true;b.textContent='CREATING…';
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/signup',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password,data:{full_name:name}})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error_description||d.msg||'Sign up failed');
+    if(d.access_token){
+      saveAuthSession(d);scheduleTokenRefresh();
+      const res=suMode==='owner'?await rpc('signup_create_company',{p_company_name:company,p_display_name:name}):await rpc('join_company',{p_code:code,p_display_name:name});
+      if(!res||!res.ok){authErr('suError',res&&res.error==='bad_code'?'That join code isn\'t right.':'Account created, but company setup failed. Sign in and try again.');return;}
+      hideAuthScreen();$('loading').classList.remove('hidden');await loadApp();
+    }else{
+      lsSet('hb_pending_signup',{mode:suMode,company,code,name});
+      authErr('suError','Account created! Check your email to confirm, then sign in.',true);
+      setTimeout(()=>showAuthForm('signin'),3500);
+    }
+  }catch(e){authErr('suError',e.message||'Could not create account.');}
+  finally{b.disabled=false;b.textContent='CREATE ACCOUNT';}
+}
+async function doJoinFromNoProfile(){
+  const code=$('npCode').value.trim().toUpperCase();if(code.length<4){authErr('npError','Enter the join code.');return;}
+  const res=await rpc('join_company',{p_code:code,p_display_name:currentUser?.name||null});
+  if(res&&res.ok){hideAuthScreen();$('loading').classList.remove('hidden');await loadApp();}else authErr('npError',res&&res.error==='bad_code'?'That join code isn\'t right.':'Could not join.');
+}
+async function doCreateFromNoProfile(){
+  const c=$('npCompany').value.trim();if(!c){authErr('npError','Enter a company name.');return;}
+  const res=await rpc('signup_create_company',{p_company_name:c,p_display_name:currentUser?.name||null});
+  if(res&&res.ok){hideAuthScreen();$('loading').classList.remove('hidden');await loadApp();}else authErr('npError','Could not create company.');
+}
+async function doSignOut(){
+  closeUserMenu();
+  if(DEMO){if(confirm('Demo mode: sign out just reloads the demo. Reset the demo data too?')){localStorage.removeItem('hb_demo');}location.reload();return;}
+  try{await fetch(SB_URL+'/auth/v1/logout',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+authAccessToken}});}catch{}
+  clearAuthSession();['hb_cache_pickups','hb_cache_runs','hb_cache_team','hb_pending'].forEach(k=>{try{localStorage.removeItem(k);}catch{}});
+  pickups=[];runs=[];team=[];location.reload();
+}
+function toggleUserMenu(){$('userMenu').classList.toggle('open');}
+function closeUserMenu(){$('userMenu').classList.remove('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('#userAvatar')&&!e.target.closest('#userMenu'))closeUserMenu();});
+
+// ── supabase client (REST) ───────────────────────────────────────────
+const sb={
+  async req(method,path,body){
+    if(DEMO)return demoReq(method,path,body);
+    const headers={apikey:SB_KEY,Authorization:'Bearer '+(authAccessToken||SB_KEY),'Content-Type':'application/json'};
+    if(method==='POST')headers.Prefer='resolution=merge-duplicates,return=minimal';
+    const r=await fetch(SB_URL+'/rest/v1/'+path,{method,headers,body:body?JSON.stringify(body):null});
+    if(!r.ok)throw new Error(await r.text());
+    const t=await r.text();return t?JSON.parse(t):[];
+  },
+  upsert:(t,d)=>sb.req('POST',t,Array.isArray(d)?d:[d]),
+  patch:(t,id,f)=>sb.req('PATCH',t+'?id=eq.'+encodeURIComponent(id),f),
+  del:(t,id)=>sb.req('DELETE',t+'?id=eq.'+encodeURIComponent(id)),
+};
+async function rpc(name,args){
+  if(DEMO)return {ok:true};
+  const r=await fetch(SB_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+authAccessToken,'Content-Type':'application/json'},body:JSON.stringify(args||{})});
+  try{return await r.json();}catch{return null;}
+}
+
+// ── sync status + debounced save queue (ported from BV Pro) ──────────
+function setSS(state,label){const d=$('syncDot'),l=$('syncLbl');d.className='sync-dot '+state;l.textContent=label||'';}
+const saveQueue={pickups:{},runs:{},profiles:{}},saveTimers={pickups:{},runs:{},profiles:{}};
+function _pending(){return lsGet('hb_pending',[]);}
+function _addPending(t,it){const a=_pending().filter(x=>!(x.t===t&&x.it.id===it.id));a.push({t,it});lsSet('hb_pending',a);}
+function _rmPending(t,id){lsSet('hb_pending',_pending().filter(x=>!(x.t===t&&x.it.id===id)));}
+function cacheTable(t){if(t==='pickups')lsSet('hb_cache_pickups',pickups);else if(t==='runs')lsSet('hb_cache_runs',runs);}
+function queueSave(table,item){
+  item.updated_at=nowIso();saveQueue[table][item.id]=item;cacheTable(table);setSS('syncing','Saving…');
+  clearTimeout(saveTimers[table][item.id]);
+  saveTimers[table][item.id]=setTimeout(async()=>{
+    const it=saveQueue[table][item.id];if(!it)return;delete saveQueue[table][item.id];
+    try{await sb.upsert(table,it);_rmPending(table,it.id);setSS('synced','Saved ✓');setTimeout(()=>{if($('syncLbl').textContent==='Saved ✓')$('syncLbl').textContent='';},1800);}
+    catch(e){console.error('save failed, queued:',e);_addPending(table,it);setSS('error','Offline — '+_pending().length+' pending');}
+  },500);
+}
+async function retryPending(){
+  const arr=_pending();if(!arr.length)return;
+  let fail=0;for(const x of arr){try{await sb.upsert(x.t,x.it);_rmPending(x.t,x.it.id);}catch{fail++;}}
+  if(fail)setSS('error','Offline — '+fail+' pending');else{setSS('synced','Synced ✓');setTimeout(()=>$('syncLbl').textContent='',1800);}
+}
+window.addEventListener('online',retryPending);
+
+// ── app state ────────────────────────────────────────────────────────
+let pickups=[],runs=[],team=[];
+let mainView='mine',pickupFilter='new',pickupSearch='',boardDate=today(),openRunId=null,moneyPeriod='month';
+const STATUS_LABEL={new:'Needs truck',scheduled:'Scheduled',done:'Picked up',cancelled:'Cancelled'};
+const SOURCES=['Call','Text','Facebook','Craigslist','Referral','Website','Other'];
+const PAY_METHODS=['Cash','Check','Zelle','Venmo','Other'];
+const TITLE_OPTS=[['has_title','Has title'],['no_title','No title'],['lien','Lien'],['unknown','Unknown']];
+const TEAM_COLORS=['#f5a524','#3b82f6','#22c55e','#a855f7','#ec4899','#14b8a6','#f97316','#ef4444'];
+
+function pickupById(id){return pickups.find(p=>p.id===id);}
+function runById(id){return runs.find(r=>r.id===id);}
+function member(id){return team.find(t=>t.user_id===id);}
+function memberName(id){const m=member(id);return m?(m.display_name||'(no name)'):'Unassigned';}
+function memberColor(id){const m=member(id);return m?.color||'#64748b';}
+function drivers(){return team.filter(t=>t.active!==false);}
+function runStops(run){return (run.stop_ids||[]).map(pickupById).filter(Boolean);}
+function runProgress(run){const s=runStops(run);return{total:s.length,done:s.filter(p=>p.status==='done').length};}
+function runsFor(date,driverId){return runs.filter(r=>r.run_date===date&&(driverId===undefined||r.driver_id===(driverId||null)));}
+
+// ── load ─────────────────────────────────────────────────────────────
+async function loadProfile(){
+  if(DEMO){const d=demoDb();const me=d.profiles.find(p=>p.user_id===currentUser.id);currentRole=me.role;currentCompanyId=d.company.id;currentCompany=d.company;currentDisplayName=me.display_name;return true;}
+  try{
+    const rows=await sb.req('GET','profiles?user_id=eq.'+encodeURIComponent(currentUser.id)+'&select=*');
+    if(!rows.length)return false;
+    const p=rows[0];currentRole=p.role;currentCompanyId=p.company_id;currentDisplayName=p.display_name||currentUser.name;
+    const c=await sb.req('GET','companies?id=eq.'+encodeURIComponent(p.company_id)+'&select=*');currentCompany=c[0]||null;
+    return true;
+  }catch(e){console.error('loadProfile',e);return !!currentRole;}
+}
+async function loadApp(){
+  $('loadMsg').textContent='Loading…';
+  const ok=await loadProfile();
+  if(!ok){showAuthScreen('noprofile');return;}
+  $('userAvatar').textContent=(currentDisplayName||'?').split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
+  $('umName').textContent=(currentDisplayName||'')+' · '+currentRole;
+  if(DEMO)$('demoBanner').classList.remove('hidden');
+  // cache first for instant paint
+  pickups=lsGet('hb_cache_pickups',[]);runs=lsGet('hb_cache_runs',[]);team=lsGet('hb_cache_team',[]);
+  buildNav();switchView(isManager()?'dispatch':'mine');
+  $('loading').classList.add('hidden');
+  await resync();
+  retryPending();
+}
+async function resync(){
+  setSS('syncing','Syncing…');
+  try{
+    const [p,r,t]=await Promise.all([
+      sb.req('GET','pickups?select=*&order=created_at.desc'),
+      sb.req('GET','runs?select=*&order=run_date.desc'),
+      sb.req('GET','profiles?select=*&order=display_name.asc'),
+    ]);
+    pickups=p;runs=r.map(x=>({...x,stop_ids:Array.isArray(x.stop_ids)?x.stop_ids:[]}));team=t;
+    lsSet('hb_cache_pickups',pickups);lsSet('hb_cache_runs',runs);lsSet('hb_cache_team',team);
+    setSS('synced','Synced ✓');setTimeout(()=>{if($('syncLbl').textContent==='Synced ✓')$('syncLbl').textContent='';},1800);
+  }catch(e){console.error('resync',e);setSS('error','Offline');}
+  render();
+}
+
+// ── nav ──────────────────────────────────────────────────────────────
+function navItems(){
+  const items=[['mine','🚛','My Run']];
+  if(isManager())items.push(['dispatch','🗓','Dispatch']);
+  items.push(['pickups','🚗','Pickups']);
+  if(isManager())items.push(['money','💰','Money']);
+  items.push(['settings','⚙','Settings']);
+  return items;
+}
+function buildNav(){
+  $('bnav').innerHTML=navItems().map(([k,ic,l])=>`<button class="bn" data-v="${k}" onclick="switchView('${k}')"><span class="ic">${ic}</span>${l}</button>`).join('');
+  $('dtabs').innerHTML=navItems().map(([k,ic,l])=>`<button class="dtab" data-v="${k}" onclick="switchView('${k}')">${l}</button>`).join('');
+}
+function switchView(v){
+  mainView=v;openRunId=null;
+  document.querySelectorAll('.view').forEach(e=>e.classList.toggle('active',e.id==='view-'+v));
+  document.querySelectorAll('[data-v]').forEach(e=>e.classList.toggle('active',e.dataset.v===v));
+  $('view-'+v).scrollTop=0;render();
+}
+function render(){
+  if(mainView==='mine')renderMine();
+  else if(mainView==='dispatch')renderDispatch();
+  else if(mainView==='pickups')renderPickups();
+  else if(mainView==='money')renderMoney();
+  else if(mainView==='settings')renderSettings();
+}
+
+// ── modal ────────────────────────────────────────────────────────────
+function openModal(title,body,acts){
+  $('modalHost').innerHTML=`<div class="mback" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <div class="mtitle"><span>${title}</span><button class="mclose" onclick="closeModal()">✕</button></div>
+    ${body}${acts?`<div class="macts">${acts}</div>`:''}</div></div>`;
+}
+function closeModal(){$('modalHost').innerHTML='';}
+const val=id=>($(id)?.value??'').trim();
+function togVal(name){const b=document.querySelector(`[data-tog="${name}"] button.on`);return b?b.dataset.v:null;}
+function tog(name,opts,cur){return `<div class="tog" data-tog="${name}">${opts.map(([v,l])=>`<button type="button" data-v="${v}" class="${String(cur)===String(v)?'on':''}" onclick="this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${l}</button>`).join('')}</div>`;}
+const YN=[['true','Yes'],['false','No'],['','?']];
+function ynVal(name){const v=togVal(name);return v==='true'?true:v==='false'?false:null;}
+function ynLabel(v){return v===true?'Yes':v===false?'No':'?';}
+
+// ═══════════════════════════════════════════════════════════════════
+// PICKUPS (lead list + editor)
+// ═══════════════════════════════════════════════════════════════════
+function pickupCard(p,opts={}){
+  const d=p.driver_id?memberName(p.driver_id):'';
+  const flags=[p.title_status==='no_title'?'NO TITLE':p.title_status==='lien'?'LIEN':'',p.runs===false?'non-running':'',p.has_keys===false?'no keys':'',p.has_wheels===false?'no wheels':''].filter(Boolean);
+  return `<div class="card tap" onclick="openPickupEditor('${p.id}')">
+    <div class="row" style="align-items:flex-start">
+      <div class="grow">
+        <div class="veh">${esc(vehLabel(p))}${p.color?` <span class="sub">· ${esc(p.color)}</span>`:''}</div>
+        <div class="addr">${esc(p.seller_name||'')}${p.seller_phone?` · ${esc(p.seller_phone)}`:''}</div>
+        <div class="addr">${esc(p.address||'(no address)')}</div>
+        ${flags.length?`<div style="margin-top:4px">${flags.map(f=>`<span class="chip" style="background:#3f1d1d;color:#fca5a5;margin-right:4px">${f}</span>`).join('')}</div>`:''}
+        ${p.status==='scheduled'?`<div class="sub" style="margin-top:4px;color:var(--amber)">${fmtDate(p.scheduled_date)}${p.time_window?' · '+esc(p.time_window):''}${d?' · '+esc(d):' · no driver yet'}</div>`:''}
+        ${p.status==='done'?`<div class="sub" style="margin-top:4px;color:var(--green)">Picked up ${fmtTsFull(p.loaded_at||p.paid_at)} · paid ${money(p.paid_amount)}${p.yard_price?' · sold '+money(p.yard_price):''}</div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="money">${money(p.offer_price)}</div>
+        <span class="chip st-${p.status}">${STATUS_LABEL[p.status]||p.status}</span>
+      </div>
+    </div>
+  </div>`;
+}
+function renderPickups(){
+  const body=$('pickupsBody');
+  const q=pickupSearch.toLowerCase();
+  const counts={new:0,scheduled:0,done:0,cancelled:0};pickups.forEach(p=>counts[p.status]=(counts[p.status]||0)+1);
+  let list=pickups.filter(p=>pickupFilter==='all'||p.status===pickupFilter);
+  if(q)list=list.filter(p=>[vehLabel(p),p.seller_name,p.seller_phone,p.address,p.vin,p.plate,p.notes].join(' ').toLowerCase().includes(q));
+  if(pickupFilter==='new')list.sort((a,b)=>(a.created_at||'').localeCompare(b.created_at||''));
+  else if(pickupFilter==='scheduled')list.sort((a,b)=>(a.scheduled_date||'9').localeCompare(b.scheduled_date||'9'));
+  const pills=[['new','Needs truck'],['scheduled','Scheduled'],['done','Picked up'],['cancelled','Cancelled'],['all','All']];
+  body.innerHTML=`
+    <div class="row" style="margin-bottom:10px"><div class="title grow">Pickups</div>${isManager()?`<button class="btn btn-amber btn-sm" onclick="openPickupEditor()">+ New pickup</button>`:''}</div>
+    <input class="finput" placeholder="Search vehicle, name, phone, address…" value="${esc(pickupSearch)}" oninput="pickupSearch=this.value;renderPickups()" style="margin-bottom:10px">
+    <div class="pills">${pills.map(([k,l])=>`<span class="pill ${pickupFilter===k?'active':''}" onclick="pickupFilter='${k}';renderPickups()">${l}${k!=='all'?` <span style="opacity:.7">${counts[k]||0}</span>`:''}</span>`).join('')}</div>
+    ${list.length?list.map(p=>pickupCard(p)).join(''):`<div class="empty">${pickupFilter==='new'?'No cars waiting for a truck. 🎉':'Nothing here.'}</div>`}`;
+}
+function openPickupEditor(id){
+  const p=id?pickupById(id):null;
+  const isNew=!p;
+  const canEdit=isManager();
+  const body=`
+    <div class="sec" style="margin-top:0">Vehicle</div>
+    <div class="grid3">
+      <div class="fg"><div class="flbl">Year</div><input class="finput" id="pkYear" inputmode="numeric" value="${esc(p?.year||'')}" ${canEdit?'':'disabled'}></div>
+      <div class="fg"><div class="flbl">Make</div><input class="finput" id="pkMake" value="${esc(p?.make||'')}" ${canEdit?'':'disabled'}></div>
+      <div class="fg"><div class="flbl">Model</div><input class="finput" id="pkModel" value="${esc(p?.model||'')}" ${canEdit?'':'disabled'}></div>
+    </div>
+    <div class="grid2">
+      <div class="fg"><div class="flbl">Color</div><input class="finput" id="pkColor" value="${esc(p?.color||'')}" ${canEdit?'':'disabled'}></div>
+      <div class="fg"><div class="flbl">Plate</div><input class="finput" id="pkPlate" value="${esc(p?.plate||'')}"></div>
+    </div>
+    <div class="fg"><div class="flbl">VIN</div><input class="finput" id="pkVin" value="${esc(p?.vin||'')}" style="font-family:monospace;letter-spacing:1px"></div>
+    <div class="fg"><div class="flbl">Title</div>${tog('title',TITLE_OPTS,p?.title_status||'has_title')}</div>
+    <div class="grid2">
+      <div class="fg"><div class="flbl">Runs & drives?</div>${tog('runs',YN,p?.runs??'')}</div>
+      <div class="fg"><div class="flbl">Keys?</div>${tog('keys',YN,p?.has_keys??'')}</div>
+      <div class="fg"><div class="flbl">All 4 wheels?</div>${tog('wheels',YN,p?.has_wheels??'true')}</div>
+      <div class="fg"><div class="flbl">Cat converter?</div>${tog('cat',YN,p?.has_cat??'')}</div>
+    </div>
+    <div class="fg"><div class="flbl">Condition notes</div><input class="finput" id="pkCond" placeholder="no engine, rolled, in a field, needs dolly…" value="${esc(p?.condition||'')}"></div>
+    <div class="sec">Seller</div>
+    <div class="grid2">
+      <div class="fg"><div class="flbl">Name</div><input class="finput" id="pkName" value="${esc(p?.seller_name||'')}" ${canEdit?'':'disabled'}></div>
+      <div class="fg"><div class="flbl">Phone</div><input class="finput" id="pkPhone" inputmode="tel" value="${esc(p?.seller_phone||'')}" ${canEdit?'':'disabled'}></div>
+    </div>
+    <div class="fg"><div class="flbl">Pickup address</div><input class="finput" id="pkAddr" placeholder="Street, City, ST ZIP" value="${esc(p?.address||'')}" ${canEdit?'':'disabled'}></div>
+    <div class="grid2">
+      <div class="fg"><div class="flbl">Offer price (we pay)</div><input class="finput" id="pkOffer" inputmode="decimal" value="${p?.offer_price??''}" ${canEdit?'':'disabled'}></div>
+      <div class="fg"><div class="flbl">Lead source</div><select class="finput" id="pkSource" ${canEdit?'':'disabled'}>${SOURCES.map(s=>`<option ${(p?.source||'')===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg"><div class="flbl">Notes</div><textarea class="finput" id="pkNotes">${esc(p?.notes||'')}</textarea></div>
+    ${canEdit?`<div class="sec">Schedule</div>
+    <div class="grid2">
+      <div class="fg"><div class="flbl">Pickup date</div><input class="finput" id="pkDate" type="date" value="${p?.scheduled_date||''}"></div>
+      <div class="fg"><div class="flbl">Time window</div><input class="finput" id="pkWin" placeholder="morning / 1–3pm" value="${esc(p?.time_window||'')}"></div>
+    </div>
+    <div class="fg"><div class="flbl">Driver</div><select class="finput" id="pkDriver"><option value="">— unassigned —</option>${drivers().map(m=>`<option value="${m.user_id}" ${p?.driver_id===m.user_id?'selected':''}>${esc(m.display_name)}</option>`).join('')}</select>
+      <div class="sub" style="margin-top:4px">Setting a date + driver drops it on that driver's run for the day.</div></div>`:''}
+    ${p&&p.status==='done'?`<div class="sec">Result</div>
+    <div class="card" style="margin-bottom:0"><div class="sub">Arrived ${fmtTsFull(p.arrived_at)} · Loaded ${fmtTsFull(p.loaded_at)}</div>
+      <div style="margin-top:4px">Paid seller <b>${money(p.paid_amount)}</b> ${p.paid_method?'('+esc(p.paid_method)+')':''} by ${esc(memberName(p.paid_by))}</div>
+      ${isManager()?`<div style="margin-top:4px">${p.yard_price?`Sold to ${esc(p.yard_name||'yard')} for <b>${money(p.yard_price)}</b> · margin <b style="color:var(--green)">${money(p.yard_price-(p.paid_amount||0)-(p.tow_fee||0))}</b>`:'<span style="color:var(--amber)">Not sold to a yard yet</span>'} <button class="btn btn-xs btn-ghost" onclick="openYardEditor('${p.id}')">Edit</button></div>`:''}
+    </div>`:''}
+    ${p&&p.seller_phone?`<div class="row" style="margin-top:12px"><a class="btn btn-sm grow" href="${telHref(p.seller_phone)}">📞 Call</a><a class="btn btn-sm grow" href="${smsHref(p.seller_phone)}">💬 Text</a>${p.address?`<a class="btn btn-sm grow" target="_blank" rel="noopener" href="${mapsSearch(p.address)}">🗺 Map</a>`:''}</div>`:''}`;
+  let acts=`<button class="btn btn-amber" onclick="savePickupForm('${p?.id||''}')">${isNew?'Add pickup':'Save'}</button>`;
+  if(p&&canEdit){
+    if(p.status!=='cancelled'&&p.status!=='done')acts+=`<button class="btn btn-ghost" onclick="cancelPickup('${p.id}')">Cancel pickup</button>`;
+    if(p.status==='cancelled')acts+=`<button class="btn btn-ghost" onclick="reopenPickup('${p.id}')">Reopen</button>`;
+    acts+=`<button class="btn btn-red" style="flex:0 0 auto" onclick="deletePickup('${p.id}')">🗑</button>`;
+  }
+  openModal(isNew?'New pickup':esc(vehLabel(p)),body,acts);
+  if(isNew)setTimeout(()=>$('pkYear').focus(),80);
+}
+function savePickupForm(id){
+  let p=id?pickupById(id):null;
+  const isNew=!p;
+  if(isNew){
+    if(!isManager()){alert('Drivers can\'t add pickups.');return;}
+    p={id:'pk_'+uid(),company_id:currentCompanyId,status:'new',created_by:currentUser.id,created_at:nowIso()};
+    pickups.unshift(p);
+  }
+  const man=isManager();
+  if(man){
+    p.year=parseInt(val('pkYear'))||null;p.make=val('pkMake');p.model=val('pkModel');p.color=val('pkColor');
+    p.seller_name=val('pkName');p.seller_phone=val('pkPhone');p.address=val('pkAddr');
+    p.offer_price=parseFloat(val('pkOffer'))||0;p.source=val('pkSource');
+  }
+  p.plate=val('pkPlate');p.vin=val('pkVin').toUpperCase();p.condition=val('pkCond');p.notes=val('pkNotes');
+  p.title_status=togVal('title')||'has_title';p.runs=ynVal('runs');p.has_keys=ynVal('keys');p.has_wheels=ynVal('wheels');p.has_cat=ynVal('cat');
+  if(man&&p.status!=='done'&&p.status!=='cancelled'){
+    const date=val('pkDate'),drv=val('pkDriver')||null;
+    applySchedule(p,date||null,drv,{save:false});
+  }
+  queueSave('pickups',p);closeModal();render();
+}
+// Put a pickup on (or off) a run. Keeps pickups.scheduled_date/driver_id and runs.stop_ids in sync.
+function applySchedule(p,date,driverId,opts={}){
+  // remove from old run if date/driver changed
+  if(p.run_id){
+    const old=runById(p.run_id);
+    if(old&&(old.run_date!==date||old.driver_id!==driverId)){old.stop_ids=(old.stop_ids||[]).filter(x=>x!==p.id);queueSave('runs',old);p.run_id=null;}
+  }
+  p.scheduled_date=date;p.driver_id=driverId;
+  if(date){
+    p.status='scheduled';
+    if(!p.run_id){
+      let run=runsFor(date,driverId)[0];
+      if(!run){run={id:'run_'+uid(),company_id:currentCompanyId,run_date:date,driver_id:driverId,status:'queued',stop_ids:[],created_at:nowIso()};runs.push(run);}
+      if(!run.stop_ids.includes(p.id))run.stop_ids.push(p.id);
+      queueSave('runs',run);p.run_id=run.id;
+    }
+  }else{p.status='new';p.run_id=null;}
+  if(opts.save!==false)queueSave('pickups',p);
+}
+function cancelPickup(id){
+  const p=pickupById(id);if(!p)return;if(!confirm('Cancel this pickup? It stays in the list under Cancelled.'))return;
+  applySchedule(p,null,null,{save:false});p.status='cancelled';queueSave('pickups',p);closeModal();render();
+}
+function reopenPickup(id){const p=pickupById(id);if(!p)return;p.status='new';queueSave('pickups',p);closeModal();render();}
+async function deletePickup(id){
+  const p=pickupById(id);if(!p)return;if(!confirm('Delete this pickup for good?'))return;
+  applySchedule(p,null,null,{save:false});pickups=pickups.filter(x=>x.id!==id);cacheTable('pickups');closeModal();render();
+  try{await sb.del('pickups',id);}catch(e){console.error(e);toast('Delete failed — will stay until resync');}
+}
+function openYardEditor(id){
+  const p=pickupById(id);if(!p)return;
+  openModal('Sold to yard',`
+    <div class="fg"><div class="flbl">Yard / buyer</div><input class="finput" id="ydName" value="${esc(p.yard_name||'')}" placeholder="e.g. Miller Compressing"></div>
+    <div class="grid2">
+      <div class="fg"><div class="flbl">Price received</div><input class="finput" id="ydPrice" inputmode="decimal" value="${p.yard_price??''}"></div>
+      <div class="fg"><div class="flbl">Date paid</div><input class="finput" id="ydDate" type="date" value="${(p.yard_paid_at||'').slice(0,10)}"></div>
+    </div>
+    <div class="fg"><div class="flbl">Extra cost (sub tow, fees)</div><input class="finput" id="ydTow" inputmode="decimal" value="${p.tow_fee??''}"></div>
+    <div class="sub">Paid seller ${money(p.paid_amount)}. Margin = price − paid − extra.</div>`,
+    `<button class="btn btn-amber" onclick="saveYard('${p.id}')">Save</button>`);
+}
+function saveYard(id){
+  const p=pickupById(id);if(!p)return;
+  p.yard_name=val('ydName');p.yard_price=parseFloat(val('ydPrice'))||null;p.tow_fee=parseFloat(val('ydTow'))||null;
+  const d=val('ydDate');p.yard_paid_at=d?d+'T12:00:00.000Z':null;
+  queueSave('pickups',p);closeModal();render();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DISPATCH (board by date)
+// ═══════════════════════════════════════════════════════════════════
+function renderDispatch(){
+  const body=$('dispatchBody');
+  if(openRunId){renderRunPage(body,openRunId);return;}
+  const date=boardDate;
+  const cols=[...drivers().map(m=>({id:m.user_id,name:m.display_name,color:m.color||'#64748b'})),{id:null,name:'Unassigned',color:'#64748b'}];
+  const waiting=pickups.filter(p=>p.status==='new'||(p.status==='scheduled'&&!p.run_id));
+  const dayTotal=runs.filter(r=>r.run_date===date).reduce((a,r)=>{const pr=runProgress(r);a.t+=pr.total;a.d+=pr.done;return a;},{t:0,d:0});
+  body.innerHTML=`
+    <div class="row" style="margin-bottom:10px">
+      <div class="title grow">Dispatch</div>
+      <button class="btn btn-amber btn-sm" onclick="openPickupEditor()">+ New pickup</button>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <button class="btn btn-sm" onclick="boardDate=shiftDate(boardDate,-1);renderDispatch()">◀</button>
+      <input type="date" class="finput" style="flex:1;text-align:center" value="${date}" onchange="boardDate=this.value;renderDispatch()">
+      <button class="btn btn-sm" onclick="boardDate=shiftDate(boardDate,1);renderDispatch()">▶</button>
+      <button class="btn btn-sm btn-ghost" onclick="boardDate=today();renderDispatch()">Today</button>
+    </div>
+    <div class="sub" style="margin-bottom:8px">${fmtDate(date)} · ${dayTotal.t} stop${dayTotal.t===1?'':'s'}${dayTotal.t?` · ${dayTotal.d} done`:''}</div>
+    <div class="board">${cols.map(c=>{
+      const rs=runsFor(date,c.id);
+      return `<div class="col"><div class="ch"><div class="cn"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.color};margin-right:6px"></span>${esc(c.name)}</div>
+        <button class="btn btn-xs" onclick="createRun('${date}','${c.id||''}')">+ Run</button></div>
+        ${rs.length?rs.map(r=>{const pr=runProgress(r);const stops=runStops(r);return `<div class="runcard ${r.status}" onclick="openRun('${r.id}')">
+          <div class="row"><div class="grow" style="font-weight:600">${esc(r.name||'Run')} <span class="sub">${pr.done}/${pr.total}</span></div><span class="chip" style="background:var(--bg);color:var(--muted)">${r.status}</span></div>
+          <div class="sub" style="margin-top:4px;line-height:1.5">${stops.slice(0,4).map((p,i)=>`${i+1}. ${esc(vehLabel(p))}${p.status==='done'?' ✓':''}`).join('<br>')}${stops.length>4?`<br>+${stops.length-4} more`:''}${!stops.length?'(empty)':''}</div>
+          <div class="prog"><i style="width:${pr.total?pr.done/pr.total*100:0}%"></i></div></div>`;}).join(''):`<div class="sub" style="padding:8px 0">No runs.</div>`}
+      </div>`;}).join('')}</div>
+    <div class="sec">Needs a truck <span style="opacity:.7">${waiting.length}</span></div>
+    ${waiting.length?waiting.map(p=>`<div class="card"><div class="row" style="align-items:flex-start">
+        <div class="grow" onclick="openPickupEditor('${p.id}')" style="cursor:pointer">
+          <div class="veh">${esc(vehLabel(p))} <span class="money" style="font-size:15px">${money(p.offer_price)}</span></div>
+          <div class="addr">${esc(p.address||'(no address)')}</div>
+          <div class="sub">${esc(p.seller_name||'')}${p.time_window?' · wants '+esc(p.time_window):''}${p.scheduled_date?' · asked for '+fmtDate(p.scheduled_date):''}</div>
+        </div>
+        <button class="btn btn-amber btn-sm" onclick="openAssignPicker('${p.id}')">Assign</button></div></div>`).join(''):'<div class="empty">Every car has a truck.</div>'}`;
+}
+function createRun(date,driverId){
+  const name=prompt('Run name (optional)','')??null;if(name===null)return;
+  const run={id:'run_'+uid(),company_id:currentCompanyId,run_date:date,driver_id:driverId||null,status:'queued',stop_ids:[],name:name||'',created_at:nowIso()};
+  runs.push(run);queueSave('runs',run);openRun(run.id);
+}
+function openAssignPicker(pickupId){
+  const p=pickupById(pickupId);if(!p)return;
+  const date=p.scheduled_date||boardDate;
+  openModal('Assign '+esc(vehLabel(p)),`
+    <div class="fg"><div class="flbl">Date</div><input class="finput" type="date" id="asDate" value="${date}"></div>
+    <div class="fg"><div class="flbl">Driver</div><select class="finput" id="asDriver"><option value="">— unassigned run —</option>${drivers().map(m=>`<option value="${m.user_id}" ${p.driver_id===m.user_id?'selected':''}>${esc(m.display_name)}</option>`).join('')}</select></div>
+    <div class="sub">Goes onto that driver's run for the day (creates one if needed).</div>`,
+    `<button class="btn btn-amber" onclick="assignPickup('${p.id}')">Assign</button>`);
+}
+function assignPickup(id){const p=pickupById(id);if(!p)return;const d=val('asDate');if(!d){alert('Pick a date.');return;}applySchedule(p,d,val('asDriver')||null);closeModal();render();}
+
+// ── run page (shared by Dispatch and My Run) ─────────────────────────
+function openRun(id){openRunId=id;render();}
+function closeRun(){openRunId=null;render();}
+function renderRunPage(body,id){
+  const run=runById(id);if(!run){openRunId=null;render();return;}
+  const manage=isManager(),isDriver=run.driver_id===currentUser.id,canTap=(manage||isDriver)&&run.status!=='done';
+  const stops=runStops(run);const pr=runProgress(run);const maps=mapsLinks(stops.filter(p=>p.status!=='done'));
+  const stopRow=(p,i)=>{
+    const st=p.status==='done'?'done':p.arrived_at?'arrived':'pending';
+    let btn='';
+    if(st==='done')btn=`<span style="color:var(--green);font-weight:700;font-size:12px">✓ ${money(p.paid_amount)}</span>`;
+    else if(canTap&&st==='pending')btn=`<button class="btn btn-amber btn-sm" onclick="event.stopPropagation();stopArrived('${p.id}')">Arrived</button>`;
+    else if(canTap&&st==='arrived')btn=`<button class="btn btn-green btn-sm" onclick="event.stopPropagation();openLoadedModal('${p.id}')">Loaded & paid</button>`;
+    const order=(canTap&&st==='pending')?`<div class="ordr"><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();runMove('${run.id}','${p.id}',-1)" ${i===0?'disabled':''}>▲</button><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();runMove('${run.id}','${p.id}',1)" ${i===stops.length-1?'disabled':''}>▼</button></div>`:'';
+    const flags=[p.title_status==='no_title'?'NO TITLE':p.title_status==='lien'?'LIEN':'',p.runs===false?'non-running':'',p.has_keys===false?'no keys':'',p.has_wheels===false?'no wheels':'',p.condition||''].filter(Boolean).join(' · ');
+    return `<div class="stop ${st}">
+      <div class="row" style="align-items:flex-start">
+        ${order}<div class="n">${i+1}</div>
+        <div class="grow" onclick="openPickupEditor('${p.id}')" style="cursor:pointer">
+          <div class="veh">${esc(vehLabel(p))}${p.color?` <span class="sub">· ${esc(p.color)}</span>`:''} <span class="money" style="font-size:15px">${money(p.offer_price)}</span></div>
+          <div class="addr"><a target="_blank" rel="noopener" href="${mapsSearch(p.address)}" onclick="event.stopPropagation()">${esc(p.address||'(no address)')}</a></div>
+          <div class="sub">${esc(p.seller_name||'')}${p.time_window?' · '+esc(p.time_window):''}</div>
+          ${flags?`<div class="sub" style="color:#fca5a5;margin-top:2px">${esc(flags)}</div>`:''}
+          ${p.notes?`<div class="sub" style="color:var(--amber);margin-top:2px">${esc(p.notes)}</div>`:''}
+          ${p.arrived_at?`<div class="sub" style="margin-top:3px">Arrived ${fmtTs(p.arrived_at)}${p.loaded_at?' · Loaded '+fmtTs(p.loaded_at):''}</div>`:''}
+        </div>
+        <div style="flex-shrink:0;display:flex;flex-direction:column;gap:6px;align-items:flex-end">${btn}
+          ${p.seller_phone?`<div class="row"><a class="btn btn-xs" href="${telHref(p.seller_phone)}" onclick="event.stopPropagation()">📞</a><a class="btn btn-xs" href="${smsHref(p.seller_phone)}" onclick="event.stopPropagation()">💬</a></div>`:''}
+          ${canTap&&st!=='done'?`<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openNoPickupModal('${run.id}','${p.id}')">Couldn't get it</button>`:''}
+        </div>
+      </div></div>`;
+  };
+  body.innerHTML=`
+    <div class="row wrap" style="margin-bottom:10px">
+      <button class="btn btn-ghost btn-sm" onclick="closeRun()">← ${mainView==='dispatch'?'Dispatch':'My Run'}</button>
+      <div class="grow"><div class="veh">${esc(run.name||'Run')} <span class="chip" style="background:var(--bg);color:var(--muted)">${run.status}</span></div><div class="sub">${fmtDate(run.run_date)} · ${esc(memberName(run.driver_id))} · ${pr.done}/${pr.total} done · ${money(stops.reduce((a,p)=>a+(parseFloat(p.offer_price)||0),0))} to pay out</div></div>
+      ${manage&&run.status!=='done'?`<button class="btn btn-ghost btn-sm" onclick="openAddStop('${run.id}')">+ Add stop</button>`:''}
+      ${manage?`<button class="btn btn-ghost btn-sm" onclick="openRunEditor('${run.id}')">Edit</button>`:''}
+    </div>
+    <div class="row wrap" style="margin-bottom:12px">
+      ${maps.map(m=>`<a class="btn btn-amber btn-sm" target="_blank" rel="noopener" href="${m.url}">🗺 ${m.label}</a>`).join('')}
+      ${canTap&&pr.total>0&&pr.done===pr.total?`<button class="btn btn-green btn-sm" onclick="finishRun('${run.id}')">Mark run complete</button>`:''}
+      ${manage&&run.status==='done'?`<button class="btn btn-ghost btn-sm" onclick="reopenRun('${run.id}')">Reopen</button>`:''}
+      ${canTap&&pr.total>pr.done?`<span class="sub" style="align-self:center">▲▼ sets the order Maps uses</span>`:''}
+    </div>
+    ${stops.length?stops.map(stopRow).join(''):'<div class="empty">No stops on this run yet.</div>'}`;
+}
+function stopArrived(id){const p=pickupById(id);if(!p)return;p.arrived_at=nowIso();const r=runById(p.run_id);if(r&&r.status==='queued'){r.status='active';queueSave('runs',r);}queueSave('pickups',p);render();}
+function openLoadedModal(id){
+  const p=pickupById(id);if(!p)return;
+  openModal('Loaded & paid — '+esc(vehLabel(p)),`
+    <div class="fg"><div class="flbl">Paid the seller</div><input class="finput" id="ldAmt" inputmode="decimal" value="${p.offer_price??0}" style="font-size:22px;font-weight:700"></div>
+    <div class="sub" style="margin-bottom:10px">Offer was ${money(p.offer_price)}. Change it if the car wasn't as described.</div>
+    <div class="fg"><div class="flbl">How</div>${tog('pay',PAY_METHODS.map(m=>[m,m]),p.paid_method||'Cash')}</div>
+    <div class="fg"><div class="flbl">Title</div>${tog('title',TITLE_OPTS,p.title_status||'has_title')}</div>
+    <div class="fg"><div class="flbl">Notes</div><input class="finput" id="ldNotes" placeholder="anything the office should know" value=""></div>`,
+    `<button class="btn btn-green" onclick="stopLoaded('${p.id}')">✓ Done — loaded & paid</button>`);
+  setTimeout(()=>{$('ldAmt').focus();$('ldAmt').select();},80);
+}
+function stopLoaded(id){
+  const p=pickupById(id);if(!p)return;const now=nowIso();
+  if(!p.arrived_at)p.arrived_at=now;
+  p.loaded_at=now;p.paid_at=now;p.paid_by=currentUser.id;p.paid_amount=parseFloat(val('ldAmt'))||0;p.paid_method=togVal('pay')||'Cash';p.title_status=togVal('title')||p.title_status;
+  const n=val('ldNotes');if(n)p.notes=(p.notes?p.notes+'\n':'')+'Driver: '+n;
+  p.status='done';queueSave('pickups',p);closeModal();render();
+}
+function openNoPickupModal(runId,id){
+  const p=pickupById(id);if(!p)return;
+  openModal('Couldn\'t get it',`
+    <div class="fg"><div class="flbl">What happened?</div>${tog('why',[['noshow','No show'],['backed_out','Backed out'],['cant_load','Couldn\'t load'],['reschedule','Reschedule']],'noshow')}</div>
+    <div class="fg"><div class="flbl">Notes</div><input class="finput" id="npNotes" placeholder="seller wants Saturday instead…"></div>
+    <div class="sub">Takes it off this run. It goes back to "Needs a truck" unless you cancel it.</div>`,
+    `<button class="btn btn-amber" onclick="noPickup('${runId}','${p.id}',false)">Back to needs truck</button><button class="btn btn-ghost" onclick="noPickup('${runId}','${p.id}',true)">Cancel pickup</button>`);
+}
+function noPickup(runId,id,cancel){
+  const p=pickupById(id);if(!p)return;
+  const why=togVal('why'),n=val('npNotes');
+  p.notes=(p.notes?p.notes+'\n':'')+fmtDate(today())+' '+({noshow:'no show',backed_out:'seller backed out',cant_load:"couldn't load",reschedule:'reschedule'}[why]||why)+(n?': '+n:'');
+  p.arrived_at=null;
+  applySchedule(p,null,null,{save:false});if(cancel)p.status='cancelled';
+  queueSave('pickups',p);closeModal();render();
+}
+function runMove(runId,id,dir){const r=runById(runId);if(!r)return;const i=r.stop_ids.indexOf(id),j=i+dir;if(i<0||j<0||j>=r.stop_ids.length)return;[r.stop_ids[i],r.stop_ids[j]]=[r.stop_ids[j],r.stop_ids[i]];queueSave('runs',r);render();}
+function finishRun(id){const r=runById(id);if(!r)return;r.status='done';queueSave('runs',r);render();}
+function reopenRun(id){const r=runById(id);if(!r)return;r.status='active';queueSave('runs',r);render();}
+function openAddStop(runId){
+  const run=runById(runId);if(!run)return;
+  const cands=pickups.filter(p=>(p.status==='new'||p.status==='scheduled')&&p.run_id!==runId);
+  openModal('Add stop',`<input class="finput" placeholder="Search…" oninput="document.querySelectorAll('#asList .card').forEach(c=>c.style.display=c.dataset.q.includes(this.value.toLowerCase())?'':'none')" style="margin-bottom:10px">
+    <div id="asList">${cands.length?cands.map(p=>`<div class="card tap" data-q="${esc((vehLabel(p)+' '+(p.address||'')+' '+(p.seller_name||'')).toLowerCase())}" onclick="addStop('${runId}','${p.id}')">
+      <div class="veh">${esc(vehLabel(p))} <span class="money" style="font-size:15px">${money(p.offer_price)}</span></div><div class="addr">${esc(p.address||'')}</div>
+      ${p.run_id?`<div class="sub" style="color:var(--amber)">Currently on ${fmtDate(p.scheduled_date)} · ${esc(memberName(p.driver_id))}</div>`:''}</div>`).join(''):'<div class="empty">No cars waiting.</div>'}</div>`);
+}
+function addStop(runId,id){const run=runById(runId),p=pickupById(id);if(!run||!p)return;applySchedule(p,run.run_date,run.driver_id);closeModal();render();}
+function openRunEditor(id){
+  const r=runById(id);if(!r)return;
+  openModal('Edit run',`
+    <div class="fg"><div class="flbl">Name</div><input class="finput" id="rnName" value="${esc(r.name||'')}" placeholder="e.g. North side"></div>
+    <div class="grid2">
+      <div class="fg"><div class="flbl">Date</div><input class="finput" type="date" id="rnDate" value="${r.run_date}"></div>
+      <div class="fg"><div class="flbl">Driver</div><select class="finput" id="rnDriver"><option value="">— unassigned —</option>${drivers().map(m=>`<option value="${m.user_id}" ${r.driver_id===m.user_id?'selected':''}>${esc(m.display_name)}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg"><div class="flbl">Notes for driver</div><textarea class="finput" id="rnNotes">${esc(r.notes||'')}</textarea></div>`,
+    `<button class="btn btn-amber" onclick="saveRunEditor('${r.id}')">Save</button><button class="btn btn-red" style="flex:0 0 auto" onclick="deleteRun('${r.id}')">🗑</button>`);
+}
+function saveRunEditor(id){
+  const r=runById(id);if(!r)return;
+  r.name=val('rnName');r.notes=val('rnNotes');r.run_date=val('rnDate')||r.run_date;r.driver_id=val('rnDriver')||null;
+  runStops(r).forEach(p=>{p.scheduled_date=r.run_date;p.driver_id=r.driver_id;queueSave('pickups',p);});
+  queueSave('runs',r);closeModal();render();
+}
+async function deleteRun(id){
+  const r=runById(id);if(!r)return;if(!confirm('Delete this run? Its stops go back to "Needs a truck".'))return;
+  runStops(r).forEach(p=>{if(p.status!=='done'){p.run_id=null;p.scheduled_date=null;p.driver_id=null;p.status='new';}else{p.run_id=null;}queueSave('pickups',p);});
+  runs=runs.filter(x=>x.id!==id);cacheTable('runs');openRunId=null;closeModal();render();
+  try{await sb.del('runs',id);}catch(e){console.error(e);}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MY RUN (driver home)
+// ═══════════════════════════════════════════════════════════════════
+function renderMine(){
+  const body=$('mineBody');
+  if(openRunId){renderRunPage(body,openRunId);return;}
+  const me=currentUser.id,t=today();
+  const mine=runs.filter(r=>r.driver_id===me&&(r.run_date===t||r.status==='active'||(r.run_date>t&&r.status!=='done'))).sort((a,b)=>a.run_date.localeCompare(b.run_date));
+  const todays=mine.filter(r=>r.run_date===t),upcoming=mine.filter(r=>r.run_date>t),stale=mine.filter(r=>r.run_date<t);
+  const recent=runs.filter(r=>r.driver_id===me&&r.status==='done').sort((a,b)=>b.run_date.localeCompare(a.run_date)).slice(0,5);
+  const runCard=r=>{const pr=runProgress(r);const s=runStops(r);return `<div class="runcard ${r.status}" onclick="openRun('${r.id}')">
+    <div class="row"><div class="grow veh">${esc(r.name||'Run')}</div><span class="sub">${pr.done}/${pr.total}</span></div>
+    <div class="sub">${fmtDate(r.run_date)} · ${money(s.reduce((a,p)=>a+(parseFloat(p.offer_price)||0),0))} to pay out</div>
+    <div class="sub" style="margin-top:4px;line-height:1.5">${s.slice(0,5).map((p,i)=>`${i+1}. ${esc(vehLabel(p))} — ${esc((p.address||'').split(',')[0])}${p.status==='done'?' ✓':''}`).join('<br>')}${s.length>5?`<br>+${s.length-5} more`:''}</div>
+    ${r.notes?`<div class="sub" style="color:var(--amber);margin-top:4px">${esc(r.notes)}</div>`:''}
+    <div class="prog"><i style="width:${pr.total?pr.done/pr.total*100:0}%"></i></div></div>`;};
+  body.innerHTML=`
+    <div class="title" style="margin-bottom:4px">My Run</div><div class="sub" style="margin-bottom:12px">${fmtDate(t)} · ${esc(currentDisplayName||'')}</div>
+    ${stale.length?`<div class="sec">Still open</div>${stale.map(runCard).join('')}`:''}
+    <div class="sec">Today</div>
+    ${todays.length?todays.map(runCard).join(''):'<div class="empty">Nothing assigned to you today.</div>'}
+    ${upcoming.length?`<div class="sec">Coming up</div>${upcoming.map(runCard).join('')}`:''}
+    ${recent.length?`<div class="sec">Recent</div>${recent.map(runCard).join('')}`:''}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MONEY
+// ═══════════════════════════════════════════════════════════════════
+function periodStart(){const d=new Date();if(moneyPeriod==='week'){const day=(d.getDay()||7)-1;d.setDate(d.getDate()-day);}else if(moneyPeriod==='month'){d.setDate(1);}else if(moneyPeriod==='year'){d.setMonth(0,1);}else return '0000';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function renderMoney(){
+  const body=$('moneyBody');
+  const start=periodStart();
+  const done=pickups.filter(p=>p.status==='done'&&(p.paid_at||'').slice(0,10)>=start);
+  const paid=done.reduce((a,p)=>a+(parseFloat(p.paid_amount)||0),0);
+  const sold=done.filter(p=>p.yard_price);
+  const rev=sold.reduce((a,p)=>a+(parseFloat(p.yard_price)||0),0);
+  const extra=done.reduce((a,p)=>a+(parseFloat(p.tow_fee)||0),0);
+  const margin=rev-sold.reduce((a,p)=>a+(parseFloat(p.paid_amount)||0)+(parseFloat(p.tow_fee)||0),0);
+  const unsold=pickups.filter(p=>p.status==='done'&&!p.yard_price).sort((a,b)=>(a.paid_at||'').localeCompare(b.paid_at||''));
+  const byDriver={};done.forEach(p=>{const k=p.paid_by||'?';byDriver[k]=byDriver[k]||{n:0,paid:0};byDriver[k].n++;byDriver[k].paid+=parseFloat(p.paid_amount)||0;});
+  const pills=[['week','This week'],['month','This month'],['year','This year'],['all','All time']];
+  body.innerHTML=`
+    <div class="title" style="margin-bottom:10px">Money</div>
+    <div class="pills">${pills.map(([k,l])=>`<span class="pill ${moneyPeriod===k?'active':''}" onclick="moneyPeriod='${k}';renderMoney()">${l}</span>`).join('')}</div>
+    <div class="grid2">
+      <div class="stat"><div class="k">Cars picked up</div><div class="v">${done.length}</div></div>
+      <div class="stat"><div class="k">Paid to sellers</div><div class="v" style="color:var(--red)">${money(paid)}</div></div>
+      <div class="stat"><div class="k">Sold to yards (${sold.length})</div><div class="v" style="color:var(--green)">${money(rev)}</div></div>
+      <div class="stat"><div class="k">Margin on sold</div><div class="v" style="color:var(--amber)">${money(margin)}</div><div class="sub">${sold.length?'avg '+money(margin/sold.length)+'/car':''}${extra?' · extra costs '+money(extra):''}</div></div>
+    </div>
+    ${Object.keys(byDriver).length?`<div class="sec">By driver</div>${Object.entries(byDriver).map(([k,v])=>`<div class="card row"><div class="grow">${esc(memberName(k))}</div><div class="sub">${v.n} car${v.n===1?'':'s'}</div><div class="money" style="font-size:16px">${money(v.paid)}</div></div>`).join('')}`:''}
+    <div class="sec">Not sold yet <span style="opacity:.7">${unsold.length}</span></div>
+    ${unsold.length?unsold.map(p=>`<div class="card tap" onclick="openYardEditor('${p.id}')"><div class="row"><div class="grow"><div class="veh">${esc(vehLabel(p))}</div><div class="sub">Picked up ${fmtTsFull(p.paid_at)} · paid ${money(p.paid_amount)} · ${esc(memberName(p.paid_by))}</div></div><button class="btn btn-sm">Sold →</button></div></div>`).join(''):'<div class="empty">Everything picked up has been sold.</div>'}
+    <div class="sec">Picked up this period</div>
+    ${done.length?done.sort((a,b)=>(b.paid_at||'').localeCompare(a.paid_at||'')).map(p=>pickupCard(p)).join(''):'<div class="empty">No pickups in this period.</div>'}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════════════
+function renderSettings(){
+  const body=$('settingsBody');
+  const me=member(currentUser.id)||{};
+  body.innerHTML=`
+    <div class="title" style="margin-bottom:10px">Settings</div>
+    <div class="sec">Me</div>
+    <div class="card">
+      <div class="grid2"><div class="fg"><div class="flbl">Name</div><input class="finput" id="meName" value="${esc(me.display_name||currentDisplayName||'')}"></div>
+      <div class="fg"><div class="flbl">Phone</div><input class="finput" id="mePhone" value="${esc(me.phone||'')}"></div></div>
+      <div class="fg"><div class="flbl">My color</div><div class="row">${TEAM_COLORS.map(c=>`<button class="btn btn-xs" style="width:28px;height:28px;border-radius:50%;background:${c};border:${(me.color||'')===c?'3px solid #fff':'none'}" onclick="setMyColor('${c}')"></button>`).join('')}</div></div>
+      <button class="btn btn-amber btn-sm" onclick="saveMe()">Save</button>
+      <span class="sub" style="margin-left:10px">${esc(currentUser.email||'')} · ${currentRole}</span>
+    </div>
+    ${isOwner()?`
+    <div class="sec">Company</div>
+    <div class="card">
+      <div class="fg"><div class="flbl">Company name</div><input class="finput" id="coName" value="${esc(currentCompany?.name||'')}"></div>
+      <div class="fg"><div class="flbl">Office phone</div><input class="finput" id="coPhone" value="${esc(currentCompany?.phone||'')}"></div>
+      <button class="btn btn-amber btn-sm" onclick="saveCompany()">Save</button>
+    </div>
+    <div class="sec">Join code</div>
+    <div class="card"><div class="row"><div class="grow"><div style="font-family:monospace;font-size:28px;letter-spacing:6px;color:var(--amber)">${esc(currentCompany?.join_code||'——')}</div><div class="sub">Drivers sign up at this app's address, pick "Joining as a driver", and enter this code.</div></div>
+      <button class="btn btn-sm" onclick="navigator.clipboard?.writeText('${esc(currentCompany?.join_code||'')}');toast('Copied')">Copy</button>
+      <button class="btn btn-sm btn-ghost" onclick="rotateCode()">New code</button></div></div>
+    <div class="sec">Team</div>
+    ${team.map(m=>`<div class="card row">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${m.color||'#64748b'}"></span>
+      <div class="grow"><div style="font-weight:600">${esc(m.display_name||'(no name)')}${m.user_id===currentUser.id?' <span class="sub">(you)</span>':''}</div><div class="sub">${esc(m.phone||'')}</div></div>
+      ${m.user_id===currentUser.id?`<span class="chip" style="background:var(--surface2);color:var(--muted)">owner</span>`:`
+      <select class="finput" style="width:auto;padding:6px 8px" onchange="setRole('${m.user_id}',this.value)"><option value="driver" ${m.role==='driver'?'selected':''}>driver</option><option value="dispatcher" ${m.role==='dispatcher'?'selected':''}>dispatcher</option><option value="owner" ${m.role==='owner'?'selected':''}>owner</option></select>
+      <button class="btn btn-xs ${m.active===false?'btn-ghost':''}" onclick="toggleActive('${m.user_id}')">${m.active===false?'Inactive':'Active'}</button>
+      <button class="btn btn-xs btn-red" onclick="removeMember('${m.user_id}')">✕</button>`}
+    </div>`).join('')}`:''}
+    <div class="sec">App</div>
+    <div class="card"><div class="sub">${APP_NAME} · ${DEMO?'demo mode':'connected to Supabase'} · <a onclick="resync()" style="color:var(--amber);cursor:pointer">Resync</a> · <a onclick="doSignOut()" style="color:var(--amber);cursor:pointer">Sign out</a></div></div>`;
+}
+let _myColor=null;
+function setMyColor(c){_myColor=c;const me=member(currentUser.id);if(me)me.color=c;renderSettings();}
+async function saveMe(){
+  const f={display_name:val('meName'),phone:val('mePhone'),updated_at:nowIso()};if(_myColor)f.color=_myColor;
+  const me=member(currentUser.id);if(me)Object.assign(me,f);currentDisplayName=f.display_name;
+  try{await sb.req('PATCH','profiles?user_id=eq.'+encodeURIComponent(currentUser.id),f);toast('Saved');}catch(e){console.error(e);toast('Save failed');}
+  lsSet('hb_cache_team',team);renderSettings();
+}
+async function saveCompany(){
+  const f={name:val('coName'),phone:val('coPhone')};Object.assign(currentCompany,f);
+  try{await sb.req('PATCH','companies?id=eq.'+encodeURIComponent(currentCompanyId),f);toast('Saved');}catch(e){toast('Save failed');}
+}
+async function rotateCode(){
+  if(!confirm('Make a new join code? The old one stops working.'))return;
+  if(DEMO){currentCompany.join_code=Math.random().toString(36).slice(2,8).toUpperCase();demoSave();renderSettings();return;}
+  try{const code=await rpc('rotate_join_code',{});if(typeof code==='string'){currentCompany.join_code=code;renderSettings();}}catch(e){toast('Failed');}
+}
+async function setRole(uidv,role){const m=member(uidv);if(!m)return;m.role=role;try{await sb.req('PATCH','profiles?user_id=eq.'+encodeURIComponent(uidv),{role});toast('Role updated');}catch(e){toast('Failed');}lsSet('hb_cache_team',team);}
+async function toggleActive(uidv){const m=member(uidv);if(!m)return;m.active=m.active===false;try{await sb.req('PATCH','profiles?user_id=eq.'+encodeURIComponent(uidv),{active:m.active});}catch(e){toast('Failed');}lsSet('hb_cache_team',team);renderSettings();}
+async function removeMember(uidv){
+  const m=member(uidv);if(!m||!confirm(`Remove ${m.display_name} from the company?`))return;
+  team=team.filter(t=>t.user_id!==uidv);lsSet('hb_cache_team',team);renderSettings();
+  try{await sb.req('DELETE','profiles?user_id=eq.'+encodeURIComponent(uidv));}catch(e){toast('Failed');}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DEMO MODE — localStorage-backed fake of the Supabase REST surface
+// ═══════════════════════════════════════════════════════════════════
+const DEMO_OWNER='demo-owner',DEMO_DRIVER='demo-driver',DEMO_DRIVER2='demo-driver2';
+function demoSeed(){
+  const t=today(),cid='demo-co';
+  const mk=(o)=>({id:'pk_'+uid(),company_id:cid,status:'new',title_status:'has_title',runs:null,has_keys:null,has_wheels:true,has_cat:null,source:'Call',created_at:nowIso(),updated_at:nowIso(),...o});
+  const p=[
+    mk({year:2006,make:'Chevy',model:'Impala',color:'Gray',seller_name:'Dan K.',seller_phone:'414-555-0147',address:'4120 N 60th St, Milwaukee, WI 53216',offer_price:325,runs:false,has_keys:true,condition:'blown head gasket',scheduled_date:t,time_window:'morning'}),
+    mk({year:2011,make:'Ford',model:'Escape',color:'Blue',seller_name:'Maria L.',seller_phone:'262-555-0199',address:'N88 W16510 Appleton Ave, Menomonee Falls, WI 53051',offer_price:450,runs:true,has_keys:true,scheduled_date:t,time_window:'after 1pm'}),
+    mk({year:2003,make:'Toyota',model:'Camry',color:'White',seller_name:'Pete',seller_phone:'414-555-0122',address:'2701 S 35th St, Milwaukee, WI 53215',offer_price:275,runs:false,has_keys:false,title_status:'no_title',condition:'in the backyard, needs dolly',scheduled_date:t}),
+    mk({year:2014,make:'Dodge',model:'Ram 1500',color:'Black',seller_name:'Tyrell',seller_phone:'414-555-0170',address:'7700 W Capitol Dr, Milwaukee, WI 53222',offer_price:900,runs:true,has_keys:true,source:'Facebook'}),
+    mk({year:1998,make:'Honda',model:'Civic',color:'Green',seller_name:'Ashley R.',seller_phone:'262-555-0133',address:'1800 Pewaukee Rd, Waukesha, WI 53188',offer_price:200,runs:false,has_wheels:false,source:'Craigslist',notes:'Tires are off, will need a flatbed'}),
+    mk({year:2009,make:'Nissan',model:'Altima',color:'Silver',seller_name:'Rob',seller_phone:'414-555-0188',address:'10300 W Silver Spring Dr, Milwaukee, WI 53225',offer_price:350,runs:true,has_keys:true,source:'Referral',scheduled_date:shiftDate(t,1),time_window:'morning'}),
+    mk({year:2005,make:'Jeep',model:'Liberty',color:'Red',seller_name:'Kim S.',seller_phone:'262-555-0108',address:'2300 Main St, West Bend, WI 53095',offer_price:400,runs:false,status:'done',arrived_at:shiftDate(t,-1)+'T15:10:00.000Z',loaded_at:shiftDate(t,-1)+'T15:40:00.000Z',paid_at:shiftDate(t,-1)+'T15:40:00.000Z',paid_amount:400,paid_method:'Cash',paid_by:DEMO_DRIVER,scheduled_date:shiftDate(t,-1),yard_name:'Miller Compressing',yard_price:640,yard_paid_at:shiftDate(t,-1)+'T20:00:00.000Z'}),
+    mk({year:2001,make:'Buick',model:'LeSabre',color:'Tan',seller_name:'Gene',seller_phone:'414-555-0161',address:'5800 W Lisbon Ave, Milwaukee, WI 53210',offer_price:250,runs:false,status:'done',arrived_at:shiftDate(t,-1)+'T17:00:00.000Z',loaded_at:shiftDate(t,-1)+'T17:25:00.000Z',paid_at:shiftDate(t,-1)+'T17:25:00.000Z',paid_amount:225,paid_method:'Cash',paid_by:DEMO_DRIVER,scheduled_date:shiftDate(t,-1),notes:'Driver: no cat converter, paid 225'}),
+  ];
+  const r1={id:'run_'+uid(),company_id:cid,run_date:t,driver_id:DEMO_DRIVER,status:'queued',name:'North side',stop_ids:[p[0].id,p[1].id],notes:'',created_at:nowIso(),updated_at:nowIso()};
+  const r2={id:'run_'+uid(),company_id:cid,run_date:t,driver_id:DEMO_DRIVER2,status:'queued',name:'South',stop_ids:[p[2].id],created_at:nowIso(),updated_at:nowIso()};
+  const r3={id:'run_'+uid(),company_id:cid,run_date:shiftDate(t,1),driver_id:DEMO_DRIVER,status:'queued',name:'',stop_ids:[p[5].id],created_at:nowIso(),updated_at:nowIso()};
+  const r4={id:'run_'+uid(),company_id:cid,run_date:shiftDate(t,-1),driver_id:DEMO_DRIVER,status:'done',name:'West',stop_ids:[p[6].id,p[7].id],created_at:nowIso(),updated_at:nowIso()};
+  [[p[0],r1],[p[1],r1],[p[2],r2],[p[5],r3],[p[6],r4],[p[7],r4]].forEach(([pk,r])=>{pk.run_id=r.id;pk.driver_id=r.driver_id;if(pk.status==='new')pk.status='scheduled';});
+  return {company:{id:cid,name:"Shane's Junk Cars",join_code:'TRUCK7',phone:'414-555-0100'},
+    profiles:[{user_id:DEMO_OWNER,company_id:cid,role:'owner',display_name:'Shane',phone:'414-555-0100',color:'#f5a524',active:true},
+              {user_id:DEMO_DRIVER,company_id:cid,role:'driver',display_name:'Marcus',phone:'414-555-0101',color:'#3b82f6',active:true},
+              {user_id:DEMO_DRIVER2,company_id:cid,role:'driver',display_name:'Luis',phone:'414-555-0102',color:'#22c55e',active:true}],
+    pickups:p,runs:[r1,r2,r3,r4]};
+}
+function demoDb(){let d=lsGet('hb_demo',null);if(!d){d=demoSeed();lsSet('hb_demo',d);}return d;}
+function demoSave(d){lsSet('hb_demo',d||window._demo||demoDb());}
+function demoSignIn(){const who=lsGet('hb_demo_who',DEMO_OWNER);const d=demoDb();const me=d.profiles.find(p=>p.user_id===who)||d.profiles[0];currentUser={id:me.user_id,email:me.display_name.toLowerCase()+'@demo.local',name:me.display_name};}
+function demoSwitchUser(id){lsSet('hb_demo_who',id);location.reload();}
+async function demoReq(method,path,body){
+  const d=demoDb();const [table,qs]=path.split('?');const q=new URLSearchParams(qs||'');
+  const rows=table==='profiles'?d.profiles:table==='companies'?[d.company]:d[table]||[];
+  const key=table==='profiles'?'user_id':'id';
+  if(method==='GET'){
+    let out=[...rows];
+    for(const [k,v] of q.entries()){if(v.startsWith('eq.')){out=out.filter(r=>String(r[k])===v.slice(3));}}
+    return JSON.parse(JSON.stringify(out));
+  }
+  if(method==='POST'){(Array.isArray(body)?body:[body]).forEach(it=>{const i=rows.findIndex(r=>r[key]===it[key]);if(i>=0)rows[i]=it;else rows.push(it);});}
+  if(method==='PATCH'){for(const [k,v] of q.entries()){if(v.startsWith('eq.'))rows.filter(r=>String(r[k])===v.slice(3)).forEach(r=>Object.assign(r,body));}if(table==='companies')Object.assign(d.company,body);}
+  if(method==='DELETE'){for(const [k,v] of q.entries()){if(v.startsWith('eq.')){const keep=rows.filter(r=>String(r[k])!==v.slice(3));rows.length=0;rows.push(...keep);}}}
+  if(table==='profiles')d.profiles=rows;else if(table!=='companies')d[table]=rows;
+  demoSave(d);return [];
+}
+// demo user switcher lives in Settings
+const _renderSettings=renderSettings;
+renderSettings=function(){_renderSettings();if(!DEMO)return;const d=demoDb();$('settingsBody').insertAdjacentHTML('beforeend',`<div class="sec">Demo: view as</div><div class="card row wrap">${d.profiles.map(p=>`<button class="btn btn-sm ${p.user_id===currentUser.id?'btn-amber':''}" onclick="demoSwitchUser('${p.user_id}')">${esc(p.display_name)} (${p.role})</button>`).join('')}</div>`);};
+
+// ── boot ─────────────────────────────────────────────────────────────
+async function init(){
+  if('serviceWorker' in navigator&&!DEMO&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+  const ok=await restoreSession();
+  if(!ok){showAuthScreen('signin');return;}
+  scheduleTokenRefresh();await loadApp();
+}
+init();
+</script>
+</body>
+</html>
